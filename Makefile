@@ -16,7 +16,7 @@ PROMU := $(GOPATH)/bin/promu
 
 PREFIX                  ?= $$(pwd)
 BIN_DIR                 ?= $$(pwd)
-DOCKER_IMAGE_NAME       ?= uwsgi-exporter
+DOCKER_IMAGE_NAME       ?= docker.io/rocdove/dingtalk-webhook
 DOCKER_IMAGE_TAG        ?= $(subst /,-,$$(git rev-parse --abbrev-ref HEAD))
 
 TESTARGS                ?= -race -v

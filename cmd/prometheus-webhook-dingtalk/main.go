@@ -10,7 +10,7 @@ import (
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/common/promlog/flag"
 	"github.com/prometheus/common/version"
-	"github.com/timonwong/prometheus-webhook-dingtalk/webrouter"
+	"github.com/rocdove/prometheus-webhook-dingtalk/webrouter"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 

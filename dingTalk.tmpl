@@ -1,0 +1,55 @@
+{{ define "__subject" }}[{{ .Status | toUpper }} Alerts:{{ .Alerts | len }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}{{ end }}
+
+{{ define "__alertmanagerURL" }}{{ .ExternalURL }}/#/alerts?receiver={{ .Receiver }}{{ end }}
+
+{{ define "__text_alert_list" }}{{ range . }}
+**Labels**
+{{ range .Labels.SortedPairs }} {{if eq .Name "ip"}}> ##### {{ .Name }}: {{ .Value | markdown | html }}{{else if eq .Name "customer"}}> ##### {{ .Name }}: {{ .Value | markdown | html }}{{else}}> ###### {{ .Name }}: {{ .Value | markdown | html }}{{end}}
+{{ end }}
+**Link**
+{{ range .Annotations.SortedPairs }} {{if eq .Name "Flow"}}> - [{{ .Name }}]({{ .Value }}){{else if eq .Name "Resources"}}> - [{{ .Name }}]({{ .Value }}){{else if eq .Name "DataSource"}}> - [{{ .Name }}]({{ .Value }}){{else}}> - {{ .Name }}: {{ .Value | markdown | html }} {{end}}
+{{ end }}
+> ###### StartsAt: {{ .StartsAt }}
+> ###### EndsAt: {{ .EndsAt }}
+{{ end }}{{ end }}
+
+{{ define "__text_batch_alert_list" }}
+**Batch Alert**
+{{ range . }}
+> ##### {{ .Labels.ip }}：{{ .Labels.customer }}
+{{ end }}
+{{ end }}
+
+{{ define "__text_resolved_list" }}{{ range . }}
+> ###### {{ .Labels.ip }}：{{ .Labels.customer }}
+{{ end }}{{ end }}
+
+{{ define "__text_node_resolved_list" }}{{ range . }}
+> ###### Node: {{ .Labels.instance }}
+> ###### StartsAt: {{ utc8 .StartsAt "2006-01-02 15:04:05" }}
+> ###### EndsAt: {{ utc8 .EndsAt "2006-01-02 15:04:05" }}
+{{ end }}
+{{ end }}
+
+{{ define "ding.link.title" }}{{ template "__subject" . }}{{ end }}
+{{ define "ding.link.content" }}
+{{ if gt (len .Alerts) 0 }}> ### [{{ index .GroupLabels "alertname" }}]({{ template "__alertmanagerURL" . }}){{ end }}
+{{ if gt (len .Alerts.Firing) 0 }}
+> #### [{{ .Alerts.Firing | len }}] Firing
+{{ if gt (len .Alerts.Firing) 5 }}
+{{ template "__text_batch_alert_list" .Alerts.Firing }}
+{{ else }}
+{{ template "__text_alert_list" .Alerts.Firing }}
+{{ end }}
+{{ end }}
+{{ if gt (len .Alerts.Resolved) 0 }}
+> #### [{{ .Alerts.Resolved | len }}] Resolved
+{{if eq (index .GroupLabels "alertname") "NodeTimeout" }}
+{{ template "__text_node_resolved_list" .Alerts.Resolved }}
+{{ else if eq (index .GroupLabels "alertname") "NodeGetEipError" }}
+{{ template "__text_node_resolved_list" .Alerts.Resolved }}
+{{ else }}
+{{ template "__text_resolved_list" .Alerts.Resolved }}
+{{end}}
+{{ end }}
+{{ end }}

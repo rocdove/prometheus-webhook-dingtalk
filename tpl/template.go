@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"strings"
 	"text/template"
+	"time"
 )
 
 const (
@@ -30,11 +31,13 @@ const (
 )
 
 var (
-	alertTemplate = template.Must(template.New("alert").Funcs(defaultFuncs).Option("missingkey=zero").Parse(alertTemplateText))
-	defaultFuncs  = map[string]interface{}{
+	alertTemplate_f = template.Must(template.New("alert").Funcs(defaultFuncs).Option("missingkey=zero").ParseFiles("./dingTalk.tmpl"))
+	alertTemplate   = template.Must(template.New("alert").Funcs(defaultFuncs).Option("missingkey=zero").Parse(alertTemplateText))
+	defaultFuncs    = map[string]interface{}{
 		"toUpper": strings.ToUpper,
 		"toLower": strings.ToLower,
 		"title":   strings.Title,
+		"utc8":    Utc8Format,
 		// join is equal to strings.Join but inverts the argument order
 		// for easier pipelining in templates.
 		"join": func(sep string, s []string) string {
@@ -49,6 +52,11 @@ func init() {
 	for _, c := range "_*`" {
 		isMarkdownSpecial[c] = true
 	}
+}
+
+func Utc8Format(t time.Time, format string) string {
+	utc8, _ := time.ParseDuration("+8h")
+	return t.Add(utc8).Format(format)
 }
 
 func markdownEscapeString(s string) string {
@@ -68,9 +76,18 @@ func ExecuteTextString(text string, data interface{}) (string, error) {
 	if text == "" {
 		return "", nil
 	}
-	tmpl, err := alertTemplate.Clone()
-	if err != nil {
-		return "", err
+	var tmpl *template.Template
+	var err error
+	if alertTemplate_f != nil {
+		tmpl, err = alertTemplate_f.Clone()
+		if err != nil {
+			return "", err
+		}
+	} else {
+		tmpl, err = alertTemplate.Clone()
+		if err != nil {
+			return "", err
+		}
 	}
 	tmpl, err = tmpl.New("").Option("missingkey=zero").Parse(text)
 	if err != nil {
